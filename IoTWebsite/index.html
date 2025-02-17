@@ -3,7 +3,7 @@
 <head>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/plantFavison" href="/images/plantFavicon.jpg">
-
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <title> Smart Greenhouse WebServer </title>
 </head>
 	<body>
@@ -16,55 +16,20 @@
         </div>
         <br>
         <br>
-		<div class="flex-Container">
-		<h1> Smart Greenhouse </h1>
-      
-		<p>Welcome to the Smart Greenhouse WebServer</p>
+        <h1> Smart Greenhouse </h1>
+        <br>
+        <div class = "flex-Container"><br></div>
+		<div class="flex-Container" class = "wrapper">
+            <div class = "inner-Container"> <i class="bi bi-thermometer-half" id = "icon-fonts"></i><p>Temperature </p></div>
+            <div class = "inner-Container"> <i class="bi bi-droplet" id = "icon-fonts"></i><p>Humidity</p></div>
+            <div class = "inner-Container"> <i class="bi bi-moisture" id = "icon-fonts"></i> <p>&nbsp;Water Level</p></div><!-- &nbsp; creates space-->
+        
+            <div class = "inner-Container"> <i class="bi bi-flower1" id = "icon-fonts"></i> <p>&nbsp;Soil Moisture</p></div>
     
-		<table>
-            <tr>
-                <th>Sensor</th>
-                <th>Value</th>
-                <th>Unit</th>
-            </tr>
-            <tr>
-                <td>Temperature</td>
-                <td></td>
-                <td>°C</td>
-            </tr>
-            <tr>
-                <td>Humidity</td>
-                <td></td>
-                <td>rh</td>
-            </tr>
-            <tr>
-                <td>Moisture</td>
-                <td></td>
-                <td>%</td>
-            </tr>
-            <tr>
-                <td>Light</td>
-                <td></td>
-                <td>lux</td>
-            </tr>
-            <tr>
-                <td>Window Status</td>
-                <td>Open</td>
-                <td>Closed</td>
-            </tr>
-            <tr>
-                <td>Door Status</td>
-                <td>Unlocked</td>
-                <td>Locked</td>
-            </tr>
+            <div class = "inner-Container"> <i class="bi bi-brightness-high" id = "icon-fonts"></i><p>&nbsp;Light</p></div>
+        </div>
 
-            <tr>
-                <td>Pump Status</td>
-                <td>On</td>
-                <td>Off</td>
-            </tr>
-            
-      </table>
-     </div>
+
+
 	</body>
 </html>
