@@ -4,6 +4,9 @@
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/plantFavison" href="/images/plantFavicon.jpg">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="crossorigin=""></script>
+
 <title> Smart Greenhouse WebServer </title>
 </head>
 	<body>
@@ -19,14 +22,24 @@
         <h1> Smart Greenhouse </h1>
         <br>
         <div class = "flex-Container"><br></div>
-		<div class="flex-Container" class = "wrapper">
-            <div class = "inner-Container"> <i class="bi bi-thermometer-half" id = "icon-fonts"></i><p>Temperature </p></div>
-            <div class = "inner-Container"> <i class="bi bi-droplet" id = "icon-fonts"></i><p>Humidity</p></div>
-            <div class = "inner-Container"> <i class="bi bi-moisture" id = "icon-fonts"></i> <p>&nbsp;Water Level</p></div><!-- &nbsp; creates space-->
+
+        <div class="flex-Container">
+          <div class="inner-Container">
+            <div class = "flexbox"> <i class="bi bi-thermometer-half" id = "icon-fonts"></i><p>Temperature <br>value </p></div>
+            <div class = "flexbox"> <i class="bi bi-droplet" id = "icon-fonts"></i><p>Humidity <br> value</p></div>
+            <div class = "flexbox"> <i class="bi bi-moisture" id = "icon-fonts"></i> <p>&nbsp;Water Level <br> value</p></div><!-- &nbsp; creates space-->
         
-            <div class = "inner-Container"> <i class="bi bi-flower1" id = "icon-fonts"></i> <p>&nbsp;Soil Moisture</p></div>
+            <div class = "flexbox"> <i class="bi bi-flower1" id = "icon-fonts"></i> <p>&nbsp;Soil Moisture <br> value</p></div>
     
-            <div class = "inner-Container"> <i class="bi bi-brightness-high" id = "icon-fonts"></i><p>&nbsp;Light</p></div>
+            <div class = "flexbox"> <i class="bi bi-brightness-high" id = "icon-fonts"></i><p>&nbsp;Light <br> value</p></div>
+            <div class = "flexbox"> <i class="bi bi-brightness-high" id = "icon-fonts"></i><p>&nbsp;Light <br> value</p></div>
+          </div>
+
+          <div class="inner-Container">
+            <div id="map" ></div>
+            <script src="app.js"></script>
+          </div>
+                
         </div>
 
 
