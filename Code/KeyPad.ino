@@ -8,22 +8,29 @@
 #include "DFRobot_AHT20.h"
 #include <BH1750.h>
 #include <ESP32Servo.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
+#include <Arduino_JSON.h>
 #include "ThingSpeak.h" //thingspeak last
 
 #define MOTOR 13
 
 //create all objects
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
 DFRobot_AHT20 aht20;
 rgb_lcd lcd;
 BH1750 lightMeter;
 Servo myservoW, myservoD;  
 WiFiClient client;
 
+
+
 //hide information in another file and refer to them by their variable name
-char ssid[] = SECRET_SSID;
-char pass[] = SECRET_PASS; 
-unsigned long myChannelNumber = SECRET_CH_ID;
-const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
+//char ssid[] = SECRET_SSID;
+//char pass[] = SECRET_PASS; 
+//unsigned long myChannelNumber = SECRET_CH_ID;
+//const char * myWriteAPIKey = SECRET_WRITE_APIKEY;
 const byte interruptPin = 34;//interupt button is pin 34
 
 int posW = 0;    // variable to store the servo position
@@ -34,6 +41,7 @@ int servoD = 25  ; //pin for door
 //assign pin to Moisture Sensor and light
 int sensorPin = 27;
 float sensorValue = 0;
+float MoistureConvertedValue = 0;
 float lux = 0;
 
 //assign trig and echo pins for  ultrasonic sensor, setting trig high creates burst, echo goes high when this burst is transmitted and is high until it gets the next one, allowing distance to be measured
@@ -45,8 +53,8 @@ float cms, inches;
 const int length_key = 4; //passsword length is 4
 char password_key[length_key] = {'1', '9', '8', '4'}; //password array stores it
 char attempt_length[length_key];//create a max attempt length based on the length of the password
-int correctCode = 0;
-int setupCheck = 0;
+volatile int correctCode = 0;
+volatile int setupCheck = 0;
 int z = 0;
 sensors_event_t humidity, temp; //captures a specific sensor reading
 
@@ -77,6 +85,7 @@ void IRAM_ATTR reset(){
   }
   correctCode = 0; //reset to default state
   setupCheck = 0;
+  digitalWrite(MOTOR, LOW);//turn motor off
 }
 
 void setup(){
@@ -102,8 +111,10 @@ void setup(){
   myservoD.attach(servoD, 500, 2400);
 
   WiFi.mode(WIFI_STA);
-  ThingSpeak.begin(client);  // Initialize ThingSpeak
-  attachInterrupt(interruptPin, reset, RISING); //triggers whenever the Pin detects a high value
+ // ThingSpeak.begin(client);  // Initialize ThingSpeak
+  attachInterrupt(interruptPin, reset, FALLING); //triggers whenever the Pin detects a high value
+  ws.onEvent(onWebSocketEvent);
+  server.addHandler(&ws);
 }
   
 void loop(){
@@ -157,15 +168,15 @@ void loop(){
   }
 
   door = 1;//if the door is open its value is 1   
-  ThingSpeak.setField(7, door);//set the value of door to he 7th field
-  ThingSpeak.writeField(myChannelNumber, 7, door, myWriteAPIKey); //write to Thingspeak
+  //Speak.setField(7, door);//set the value of door to he 7th field
+  //ThingSpeak.writeField(myChannelNumber, 7, door, myWriteAPIKey); //write to Thingspeak
 
   if(aht20.startMeasurementReady(/* crcEn = */true)){ //if aht20 is ready
     lcd.print("Temp: ");
     float temperature = aht20.getTemperature_C(); //store temp so it can be used to write to thingspeak later
     lcd.print(temperature);
-    ThingSpeak.setField(1, temperature);//set the value of temperature to the 1st field
-    ThingSpeak.writeField(myChannelNumber, 1, temperature, myWriteAPIKey); //write to Thingspeak 
+    //ThingSpeak.setField(1, temperature);//set the value of temperature to the 1st field
+    //ThingSpeak.writeField(myChannelNumber, 1, temperature, myWriteAPIKey); //write to Thingspeak 
     lcd.print("C");
     delay(2000);
     lcd.clear();
@@ -173,21 +184,21 @@ void loop(){
     lcd.print("Hum: ");
     float humidity = aht20.getHumidity_RH();
     lcd.print(humidity);
-    ThingSpeak.setField(2, humidity);//set the value of humidity to the 2nd field
-    ThingSpeak.writeField(myChannelNumber, 2, humidity, myWriteAPIKey); //write to Thingspeak
+    //ThingSpeak.setField(2, humidity);//set the value of humidity to the 2nd field
+    //ThingSpeak.writeField(myChannelNumber, 2, humidity, myWriteAPIKey); //write to Thingspeak
     lcd.print("%rH");
     delay(2000);
     lcd.clear();
 
-    if(humidity <= 60){//open the window if the humidity is too high
+    if(humidity >= 60){//open the window if the humidity is too high
       for (posW = 0; posW <= 90; posW += 1) { // goes from 0 degrees to 90 degrees
         myservoW.write(posW);   // tell servo to go to position in variable 'pos'
         delay(15);             // waits 15ms for the servo to reach the position before moving again
          
 	    }
         window = 1;//if the window is open, the value is 1
-        ThingSpeak.setField(6, window);//set the value of window to the 6th field
-        ThingSpeak.writeField(myChannelNumber, 6, window, myWriteAPIKey); //write to Thingspeak
+        //ThingSpeak.setField(6, window);//set the value of window to the 6th field
+        //ThingSpeak.writeField(myChannelNumber, 6, window, myWriteAPIKey); //write to Thingspeak
 
       } else{
         if (window == 1){ 
@@ -195,32 +206,33 @@ void loop(){
             myservoW.write(posW);   // tell servo to go to position in variable 'pos'
             delay(15);
         }
-        window = 0;//if the window is closed, the value is 1
-        ThingSpeak.setField(6, window);//set the value of window to the 6th field
-        ThingSpeak.writeField(myChannelNumber, 6, window, myWriteAPIKey); //write to Thingspeak
+        window = 0;//if the window is closed, the value is 0
+        //ThingSpeak.setField(6, window);//set the value of window to the 6th field
+        //ThingSpeak.writeField(myChannelNumber, 6, window, myWriteAPIKey); //write to Thingspeak
       }
   }
   sensorValue = analogRead(sensorPin);
   lcd.print("Moisture: ");
   Serial.println(sensorValue);
-  lcd.print((sensorValue/4095)*100);//set to a percent
-  ThingSpeak.setField(3, sensorValue);//set the value of soilMoisture to the 3rd field
-  ThingSpeak.writeField(myChannelNumber, 3, sensorValue, myWriteAPIKey); //write to Thingspeak
+  MoistureConvertedValue = (sensorValue/4095)*100;
+  lcd.print((MoistureConvertedValue));//print percentage value
+  //ThingSpeak.setField(3, sensorValue);//set the value of soilMoisture to the 3rd field
+  //ThingSpeak.writeField(myChannelNumber, 3, sensorValue, myWriteAPIKey); //write to Thingspeak
   lcd.print("%");
   delay(2000);
   lcd.clear();
 
   if(sensorValue <= 50){
     digitalWrite(MOTOR, HIGH);
-    delay(5000);//set motor high for 5 seconds
+    delay(1000);//set motor high for 5 seconds
     digitalWrite(MOTOR, LOW);//turn motor off
   }
 
   lux = lightMeter.readLightLevel();
   lcd.print("Light: ");
   lcd.print(lux);
-  ThingSpeak.setField(4, lux);//set the value of light to the 4th field
-  ThingSpeak.writeField(myChannelNumber, 4, lux, myWriteAPIKey); //write to Thingspeak
+  //ThingSpeak.setField(4, lux);//set the value of light to the 4th field
+  //ThingSpeak.writeField(myChannelNumber, 4, lux, myWriteAPIKey); //write to Thingspeak
   lcd.print("lx");
   delay(2000);
   lcd.clear();
@@ -238,8 +250,8 @@ void loop(){
 
   lcd.print("Dist: ");
   lcd.print(cms);
-  ThingSpeak.setField(5, cms);  //set the value of distance to the 5th field
-  ThingSpeak.writeField(myChannelNumber, 5, cms, myWriteAPIKey); //write to Thingspeak
+  //ThingSpeak.setField(5, cms);  //set the value of distance to the 5th field
+  //ThingSpeak.writeField(myChannelNumber, 5, cms, myWriteAPIKey); //write to Thingspeak
   lcd.print("cm");
   delay(2000);
   lcd.clear();
@@ -274,6 +286,59 @@ void checkKEY(){
     }
 }
 
+void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len){
+  switch(type){
+    case WS_EVT_CONNECT:
+      Serial.printf("Client %u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      break;
+
+    case WS_EVT_DISCONNECT:
+      Serial.printf("Client %u disconnected\n", client->id());
+      break;
+
+    case WS_EVT_DATA:
+      String message = String((char*)data).substring(0,len);
+      Serial.printf("Recieved from client %u: %s\n", client->id(), message.c_str());
+
+      client->text("ESP 32 recieved: "+ message);
+      break;
+
+    case WS_EVT_PONG:
+      Serial.printf("Pong recieved from client %u\n", client->id());
+      break;
+
+    case WS_EVT_ERROR:
+      Serial.printf("WebSocket error from client %u\n", client->id());
+      break;
+
+  }
+
+//   String createJSON(){
+//     StaticJsonDocument<200> jsonDoc;
+//     jsonDoc["temperature"] = aht20.getTemperature_C();
+//     jsonDoc["humidity"] = aht20.getHumidity_RH();
+//     jsonDoc["moisture"] = MoistureConvertedValue;
+//     jsonDoc["light"] = lightMeter.readLightLevel();
+//     jsonDoc["distance"] = cms;
+
+//     if(window == 0){
+//       jsonDoc["window"] = "CLOSED";
+//     } else{
+//       jsonDoc["window"] = "OPEN";
+//     }
+
+//     if(door == 0){
+//       jsonDoc["door"] = "CLOSED";
+//     } else{
+//       jsonDoc["door"] = "OPEN";
+//     }
+
+//     String jsonString;
+//     serialalize(jsonDoc, jsonString);
+//     return jsonString;
+      
+//   } 
+// }
 
 
 
