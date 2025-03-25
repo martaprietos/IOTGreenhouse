@@ -32,3 +32,61 @@ marker3.on('click', function(ev) {
 marker4.on('click', function(ev) {
     location.href='water.html';
 });
+
+var socket; //create variable
+
+function initWebSocket() {
+  socket = new WebSocket("ws://" + C:OneDrive - Atlantic TU\Documents\Year 2\IoT\IOTGreenhouse\Code + "/ws");
+
+  socket.onopen = function() {
+    console.log("WebSocket connected");
+  };
+
+  socket.onmessage = function(event) {
+    var data = JSON.parse(event.data);
+    if (data.temperature !== undefined) {
+      document.getElementById("tempValue").innerText = data.temperature + " °C";
+    }
+    if (data.hum !== undefined) {
+      document.getElementById("humValue").innerText = data.hum + " rH";
+    }
+    if (data.moisture !== undefined){
+      document.getElementById("moistureValue").innerText = data.moisture + "%"; 
+    }
+    if (data.light !== undefined){
+      document.getElementById("lightValue").innerText = data.light + "lux"; 
+    }
+    if (data.door !== undefined) {
+        document.getElementById("doorStatus").innerText = data.door ? "OPEN" : "CLOSED";
+      }
+
+    if (data.door !== undefined) {
+        document.getElementById("windowStatus").innerText = data.window ? "OPEN" : "CLOSED";
+      }
+  };
+
+  socket.onclose = function() {
+    console.log("WebSocket disconnected, retrying...");
+    setTimeout(initWebSocket, 10000);
+  };
+}
+
+function toggleLED() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send("toggleLED");
+  }
+}
+
+function toggleServo1() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send("toggleServo1");
+  }
+}
+
+function toggleServo2() {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send("toggleServo2");
+  }
+}
+
+window.onload = initWebSocket;
