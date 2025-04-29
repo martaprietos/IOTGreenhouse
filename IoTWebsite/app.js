@@ -36,7 +36,7 @@ marker4.on('click', function(ev) {
 var socket; //create variable
 
 function initWebSocket() {
-  socket = new WebSocket("ws://" + C:OneDrive - Atlantic TU\Documents\Year 2\IoT\IOTGreenhouse\Code + "/ws");
+  socket = new WebSocket("ws://" + window.location.hostname + "/ws");
 
   socket.onopen = function() {
     console.log("WebSocket connected");
